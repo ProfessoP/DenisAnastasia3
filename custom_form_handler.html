@@ -1,0 +1,44 @@
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Overwrite Tilda's form submission
+    setTimeout(function() {
+        const tildaForms = document.querySelectorAll('form');
+        tildaForms.forEach(form => {
+            // Remove Tilda's submit handlers if possible, or just intercept
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                
+                // Show loading state
+                const btn = form.querySelector('button[type="submit"]');
+                const origText = btn ? btn.innerText : 'ОТПРАВИТЬ';
+                if(btn) btn.innerText = 'Отправка...';
+                
+                // Collect data
+                const formData = new FormData(form);
+                const data = {};
+                for(let [key, value] of formData.entries()) {
+                    // Tilda field names are like "Имя и фамилия", "Подтвердите своё присутствие:"
+                    data[key] = value;
+                }
+                
+                fetch('https://script.google.com/macros/s/AKfycbxrqJrqgOuNZnhSyUOJZvX0eRk3vaZJYoVsaxctD_aaFUKyF4L6if8Znkbz0ZdU1jB3/exec', {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                }).then(() => {
+                    if(btn) btn.innerText = 'Успешно отправлено!';
+                    form.reset();
+                    setTimeout(() => { if(btn) btn.innerText = origText; }, 3000);
+                }).catch(err => {
+                    if(btn) btn.innerText = 'Ошибка. Попробуйте еще раз.';
+                    setTimeout(() => { if(btn) btn.innerText = origText; }, 3000);
+                });
+            }, true); // Use capture phase to intercept before Tilda
+        });
+    }, 2000); // Wait for Tilda to build the form
+});
+</script>
